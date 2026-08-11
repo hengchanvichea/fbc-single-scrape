@@ -14,7 +14,7 @@ dotenv.config();
 
     console.log('Opening Sport tab...');
     await page.locator('#tabasc').click();
-    await sleep(2000);
+    await sleep(10000);
 
     console.log('Navigating to site...');
     const topFrame = await page.$$('.ScreenSize iframe#topFrame');

@@ -32,7 +32,6 @@ export function convertOddsHdpOu(date, data) {
                 const {homeTeam, awayTeam, given} = match.team;
                 if (hasMarker(homeTeam) || hasMarker(awayTeam)) continue;
                 const matchId = parseMatchId(match.fixture_id);
-                if (matchId !== '28863848') continue;
                 const time = parseMatchTime(match.time);
 
                 // --------------- To be implemented ---------------
@@ -44,53 +43,52 @@ export function convertOddsHdpOu(date, data) {
                     ft1x2Odds = oneXTwoOdds(matchId, ticketMarketType._1X2, fullTime1x2.odds);
                     markets.push(ft1x2Odds);
                 }
-                // // Full Time Handicap odds
+                // Full Time Handicap odds
                 const fullTimeHdp = marketOdds(match.markets, 3);
-                console.log(JSON.stringify(match.markets))
-                // if (fullTimeHdp) {
-                //     ftHDPOdds = hdpOdds(matchId, ticketMarketType.AsianHandicap, fullTimeHdp.odds, fullTimeHdp.line);
-                //     markets.push(ftHDPOdds);
-                // }
-                // // Full Time OU odds
-                // const fullTimeOU = marketOdds(match.markets, 6);
-                // if (fullTimeOU) {
-                //     ftOUOdds = ouOdds(matchId, ticketMarketType.AsianUnderOver, fullTimeOU.odds, fullTimeOU.line);
-                //     markets.push(ftOUOdds);
-                // }
-                // // Half Time 1x2
-                // const halfTime1x2 = marketOdds(match.markets, 7);
-                // if (halfTime1x2) {
-                //     ht1x2Odds = oneXTwoOdds(matchId, ticketMarketType._1X21stPeriod, halfTime1x2.odds);
-                //     markets.push(ht1x2Odds);
-                // }
-                // const halfTimeHdp = marketOdds(match.markets, 8);
-                // if (halfTimeHdp) {
-                //     htHDPOdds = hdpOdds(matchId, ticketMarketType.AsianHandicap1stPeriod, halfTimeHdp.odds, halfTimeHdp.line);
-                //     markets.push(htHDPOdds);
-                // }
-                // const halfTimeOU = marketOdds(match.markets, 9);
-                // if (halfTimeOU) {
-                //     htOUOdds = ouOdds(
-                //         matchId,
-                //         ticketMarketType.AsianUnderOver1stPeriod,
-                //         halfTimeOU.odds,
-                //         halfTimeOU.line
-                //     );
-                //     markets.push(htOUOdds);
-                // }
-                //
-                // if (markets.length > 0) {
-                //     result.push(buildMessage(
-                //         type,
-                //         matchId,
-                //         leagueName,
-                //         null,
-                //         time,
-                //         homeTeam,
-                //         awayTeam,
-                //         markets
-                //     ));
-                // }
+                if (fullTimeHdp) {
+                    ftHDPOdds = hdpOdds(matchId, ticketMarketType.AsianHandicap, fullTimeHdp.odds, fullTimeHdp.line);
+                    markets.push(ftHDPOdds);
+                }
+                // Full Time OU odds
+                const fullTimeOU = marketOdds(match.markets, 4);
+                if (fullTimeOU) {
+                    ftOUOdds = ouOdds(matchId, ticketMarketType.AsianUnderOver, fullTimeOU.odds, fullTimeOU.line);
+                    markets.push(ftOUOdds);
+                }
+                // Half Time 1x2
+                const halfTime1x2 = marketOdds(match.markets, 5);
+                if (halfTime1x2) {
+                    ht1x2Odds = oneXTwoOdds(matchId, ticketMarketType._1X21stPeriod, halfTime1x2.odds);
+                    markets.push(ht1x2Odds);
+                }
+                const halfTimeHdp = marketOdds(match.markets, 6);
+                if (halfTimeHdp) {
+                    htHDPOdds = hdpOdds(matchId, ticketMarketType.AsianHandicap1stPeriod, halfTimeHdp.odds, halfTimeHdp.line);
+                    markets.push(htHDPOdds);
+                }
+                const halfTimeOU = marketOdds(match.markets, 7);
+                if (halfTimeOU) {
+                    htOUOdds = ouOdds(
+                        matchId,
+                        ticketMarketType.AsianUnderOver1stPeriod,
+                        halfTimeOU.odds,
+                        halfTimeOU.line
+                    );
+                    markets.push(htOUOdds);
+                }
+
+                if (markets.length > 0) {
+                    result.push(buildMessage(
+                        type,
+                        matchId,
+                        leagueName,
+                        null,
+                        time,
+                        homeTeam,
+                        awayTeam,
+                        markets
+                    ));
+                }
             }
         }
     }
