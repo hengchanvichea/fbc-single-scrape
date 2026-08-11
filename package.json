@@ -1,0 +1,29 @@
+{
+  "name": "fbc",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "",
+  "main": "index.js",
+
+  "scripts": {
+    "test": "vitest"
+  },
+
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "amqplib": "^0.10.9",
+    "axios": "^1.13.2",
+    "cheerio": "^1.1.2",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "node-cache": "^5.1.2",
+    "nodemon": "^3.1.11",
+    "puppeteer": "^24.32.0",
+    "puppeteer-real-browser": "^1.4.4"
+  },
+  "devDependencies": {
+    "jest": "^30.2.0"
+  }
+}
