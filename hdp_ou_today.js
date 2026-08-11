@@ -166,16 +166,8 @@ async function run() {
 
                 const extractTime = (row) => {
                     const cell = row.querySelector("td.text_time");
-
                     if (!cell) return "";
-
                     const clone = cell.cloneNode(true);
-
-                    // Remove Live text
-                    clone.querySelectorAll("span").forEach((span) => {
-                        span.remove();
-                    });
-
                     return cleanText(clone.textContent);
                 };
 
