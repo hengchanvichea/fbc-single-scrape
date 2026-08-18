@@ -32,7 +32,7 @@ async function run() {
                 const results = convertOddsOutright(data);
                 console.log("results:", results.length);
                 for (const market of results) {
-                    // await mq.publishJson(market);
+                    await mq.publishJson(market);
                 }
             }
         } catch (error) {
