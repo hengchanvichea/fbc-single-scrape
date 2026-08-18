@@ -1,7 +1,17 @@
-import {RabbitMQManager} from "./rabbitmq/rabbitmq_manager.js";
-import {injectCookies, testConnect} from "./src/browser.js";
-import sleep from "./supports/sleep.js";
-import {convertOddsCs} from "./converter/correct_score_converter.js";
+import sleep from "../supports/sleep.js";
+import {convertOddsDc} from "../converter/double_chance_converter.js";
+import {injectCookies, testConnect} from "../src/browser.js";
+import {RabbitMQManager} from "../rabbitmq/rabbitmq_manager.js";
+import dotenv from "dotenv";
+import path from "path";
+import {fileURLToPath} from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({
+    path: path.resolve(__dirname, "../.env"),
+});
 
 async function run() {
     const oddsPrefix = "";
@@ -19,7 +29,7 @@ async function run() {
             if (payload != null) {
                 const data = Array.isArray(payload) ? payload : Object.values(payload);
                 console.log("data", data.length);
-                const results = convertOddsCs("today", data);
+                const results = convertOddsDc("tomorrow", data);
                 console.log("results:", results.length);
                 for (const market of results) {
                     await mq.publishJson(market);
@@ -99,7 +109,7 @@ async function run() {
                     }
 
                     const teams = teamCell.innerText
-                        .split("\n")
+                        .split("-VS-")
                         .map(t => cleanText(t))
                         .filter(Boolean)
                         .map(t => t.replace("(N)", "").trim());
@@ -111,17 +121,14 @@ async function run() {
                 };
 
                 const extractMarkets = (row) => {
-                    return [...row.querySelectorAll("a[xid]")]
-                        .map(a => ({
-                            xid: a.getAttribute("xid"),
-                            value: cleanText(a.textContent),
-                            score: a.closest("td")?.getAttribute("title") || ""
-                        }));
+                    return [...row.querySelectorAll("a[xid]")].map(a => ({
+                        xid: a.getAttribute("xid"),
+                        value: cleanText(a.textContent)
+                    }));
                 };
 
                 const result = [];
                 let currentLeague = null;
-                const fixtureMap = {};
 
                 const rows = container.querySelectorAll(
                     "tr[id], tr[name]"
@@ -144,37 +151,26 @@ async function run() {
                     const rowId = row.id?.trim();
                     if (!rowId) continue;
 
-                    const fixtureKey = rowId.replace(/_\d+$/, "");
+                    const {
+                        homeTeam,
+                        awayTeam
+                    } = extractTeams(row);
 
-                    if (!fixtureMap[fixtureKey]) {
-                        const {
-                            homeTeam,
-                            awayTeam
-                        } = extractTeams(row);
+                    if (!homeTeam || !awayTeam)
+                        continue;
 
-                        if (!homeTeam || !awayTeam) continue;
+                    currentLeague.fixtures.push({
+                        id: rowId,
+                        fixture_id: parseFixtureId(rowId),
+                        time: cleanText(
+                            row.querySelector("td.text_time")
+                                ?.textContent
+                        ),
+                        team: {homeTeam, awayTeam},
+                        markets: extractMarkets(row)
 
-                        fixtureMap[fixtureKey] = {
-                            id: fixtureKey,
-                            fixture_id: parseFixtureId(rowId),
-                            time: cleanText(
-                                row.querySelector(".text_time")
-                                    ?.textContent
-                            ),
-                            team: {
-                                homeTeam,
-                                awayTeam
-                            },
-                            markets: []
-                        };
-                        currentLeague.fixtures.push(
-                            fixtureMap[fixtureKey]
-                        );
-                    }
+                    });
 
-                    fixtureMap[fixtureKey].markets.push(
-                        ...extractMarkets(row)
-                    );
                 }
 
                 return result;
@@ -234,31 +230,18 @@ async function run() {
 
     // Function to detect iframe and inject observer
     async function initObserver() {
-        let targetFrame = null;
-        const frames = page.frames();
         await sleep(5000);
-        for (const mainFrame of frames) {
-            // Delay 3 seconds
-            const childFrames = mainFrame.childFrames();
-            for (const f of childFrames) {
-                try {
-                    if (f.url().includes("Handicap/CorrectScore.aspx")) {
-                        targetFrame = f;
-                        break;
-                    }
-                } catch {
-                }
-            }
-
-        }
+        const targetFrame = page
+            .frames()
+            .find(frame => frame.url().includes("Handicap/OneX2.aspx"));
 
         if (!targetFrame) return false;
         await injectObserver(targetFrame);
-        console.log(`${targetFrame.url()}- ${new Date().toISOString()} -CS Today observe!`);
+        console.log(`${targetFrame.url()}- ${new Date().toISOString()} -DC Tomorrow observe!`);
         return true;
     }
 
-    async function goToCS() {
+    async function goToDC() {
         let targetFrame = null;
         const frames = page.frames();
         await sleep(5000);
@@ -280,17 +263,18 @@ async function run() {
         if (!targetFrame) return;
 
         await targetFrame.evaluate(() => {
-            document.querySelector('[id="1_CS"] a').click();
+            document.getElementById('market_E_text').click();
+            document.querySelector('[id="1_1X2"] a').click();
         });
     }
 
     // 1 - Load session and main page
     await page.goto(process.env.SITE_BASE_URL, {waitUntil: "networkidle2"});
-    await goToCS();
+    await goToDC();
     console.log("Session URL loaded!");
 
     // Delay 5 seconds
-    await sleep(5000);
+    await sleep(3000);
 
     // 3 — Initial observer injection
     await initObserver();

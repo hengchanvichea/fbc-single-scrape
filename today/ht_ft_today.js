@@ -1,7 +1,17 @@
-import {RabbitMQManager} from "./rabbitmq/rabbitmq_manager.js";
-import {injectCookies, testConnect} from "./src/browser.js";
-import sleep from "./supports/sleep.js";
-import {convertOddsOe} from "./converter/oe_converter.js";
+import {RabbitMQManager} from "../rabbitmq/rabbitmq_manager.js";
+import {injectCookies, testConnect} from "../src/browser.js";
+import sleep from "../supports/sleep.js";
+import {convertOddsHtFt} from "../converter/ht_ft_converter.js";
+import {fileURLToPath} from "url";
+import path from "path";
+import dotenv from "dotenv";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({
+    path: path.resolve(__dirname, "../.env"),
+});
 
 async function run() {
     const oddsPrefix = "";
@@ -19,7 +29,7 @@ async function run() {
             if (payload != null) {
                 const data = Array.isArray(payload) ? payload : Object.values(payload);
                 console.log("data", data.length);
-                const results = convertOddsOe("today", data);
+                const results = convertOddsHtFt("today", data);
                 console.log("results:", results.length);
                 for (const market of results) {
                     await mq.publishJson(market);
@@ -110,6 +120,21 @@ async function run() {
                     };
                 };
 
+
+                const extractTime = (row) => {
+                    const teamCell = row.querySelector(
+                        "td.UnLetTeamClass, td.LetTeamClass"
+                    );
+
+                    const timeCell = teamCell?.previousElementSibling;
+
+                    if (!timeCell) return "";
+
+                    return timeCell.textContent
+                        .replace(/\s+/g, "")
+                        .trim();
+                };
+
                 const extractMarkets = (row) => {
                     return [...row.querySelectorAll("a[xid]")].map(a => ({
                         xid: a.getAttribute("xid"),
@@ -152,13 +177,9 @@ async function run() {
                     currentLeague.fixtures.push({
                         id: rowId,
                         fixture_id: parseFixtureId(rowId),
-                        time: cleanText(
-                            row.querySelector("td.text_time")
-                                ?.textContent
-                        ),
+                        time: extractTime(row),
                         team: {homeTeam, awayTeam},
                         markets: extractMarkets(row)
-
                     });
 
                 }
@@ -223,15 +244,15 @@ async function run() {
         await sleep(5000);
         const targetFrame = page
             .frames()
-            .find(frame => frame.url().includes("Handicap/OeTg.aspx"));
+            .find(frame => frame.url().includes("Handicap/HTFT.aspx"));
 
         if (!targetFrame) return false;
         await injectObserver(targetFrame);
-        console.log(`${targetFrame.url()}- ${new Date().toISOString()} -OE Today observe!`);
+        console.log(`${targetFrame.url()}- ${new Date().toISOString()} -HTFT Today observe!`);
         return true;
     }
 
-    async function goToOE() {
+    async function goToHTFT() {
         let targetFrame = null;
         const frames = page.frames();
         await sleep(5000);
@@ -253,13 +274,13 @@ async function run() {
         if (!targetFrame) return;
 
         await targetFrame.evaluate(() => {
-            document.querySelector('[id="1_OETG"] a').click();
+            document.querySelector('[id="1_HTFT"] a').click();
         });
     }
 
     // 1 - Load session and main page
     await page.goto(process.env.SITE_BASE_URL, {waitUntil: "networkidle2"});
-    await goToOE();
+    await goToHTFT();
     console.log("Session URL loaded!");
 
     // Delay 5 seconds
@@ -292,7 +313,8 @@ async function run() {
     console.log("Live tracking initialized — ready!");
 
     // Keep script running
-    await new Promise(() => {});
+    await new Promise(() => {
+    });
 }
 
 run().catch((err) => console.error("Error:", err));

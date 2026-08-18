@@ -1,7 +1,17 @@
-import {RabbitMQManager} from "./rabbitmq/rabbitmq_manager.js";
-import {injectCookies, testConnect} from "./src/browser.js";
-import sleep from "./supports/sleep.js";
-import {convertOddsHdpOu} from "./converter/hdp_ou_converter.js";
+import {RabbitMQManager} from "../rabbitmq/rabbitmq_manager.js";
+import {injectCookies, testConnect} from "../src/browser.js";
+import sleep from "../supports/sleep.js";
+import {convertOddsHdpOu} from "../converter/hdp_ou_converter.js";
+import {fileURLToPath} from "url";
+import path from "path";
+import dotenv from "dotenv";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({
+    path: path.resolve(__dirname, "../.env"),
+});
 
 async function run() {
     const oddsPrefix = "";

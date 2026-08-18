@@ -1,7 +1,17 @@
-import {RabbitMQManager} from "./rabbitmq/rabbitmq_manager.js";
-import {injectCookies, testConnect} from "./src/browser.js";
-import sleep from "./supports/sleep.js";
-import {convertOddsDcHt} from "./converter/double_chance_ht_converter.js";
+import {RabbitMQManager} from "../rabbitmq/rabbitmq_manager.js";
+import {injectCookies, testConnect} from "../src/browser.js";
+import sleep from "../supports/sleep.js";
+import {convertOddsOeHt} from "../converter/oe_ht_converter.js";
+import {fileURLToPath} from "url";
+import path from "path";
+import dotenv from "dotenv";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({
+    path: path.resolve(__dirname, "../.env"),
+});
 
 async function run() {
     const oddsPrefix = "";
@@ -19,7 +29,7 @@ async function run() {
             if (payload != null) {
                 const data = Array.isArray(payload) ? payload : Object.values(payload);
                 console.log("data", data.length);
-                const results = convertOddsDcHt("today", data);
+                const results = convertOddsOeHt("tomorrow", data);
                 console.log("results:", results.length);
                 for (const market of results) {
                     await mq.publishJson(market);
@@ -99,7 +109,7 @@ async function run() {
                     }
 
                     const teams = teamCell.innerText
-                        .split("-VS-")
+                        .split("\n")
                         .map(t => cleanText(t))
                         .filter(Boolean)
                         .map(t => t.replace("(N)", "").trim());
@@ -223,7 +233,7 @@ async function run() {
         await sleep(5000);
         const targetFrame = page
             .frames()
-            .find(frame => frame.url().includes("Handicap/OneX2.aspx"));
+            .find(frame => frame.url().includes("Handicap/OeTg.aspx"));
 
         if (!targetFrame) return false;
         await targetFrame.evaluate(() => {
@@ -242,11 +252,11 @@ async function run() {
 
         await sleep(1000);
         await injectObserver(targetFrame);
-        console.log(`${targetFrame.url()}- ${new Date().toISOString()} -DC Today observe!`);
+        console.log(`${targetFrame.url()}- ${new Date().toISOString()} -OE Tomorrow observe!`);
         return true;
     }
 
-    async function goToDC() {
+    async function goToOE() {
         let targetFrame = null;
         const frames = page.frames();
         await sleep(5000);
@@ -268,17 +278,18 @@ async function run() {
         if (!targetFrame) return;
 
         await targetFrame.evaluate(() => {
-            document.querySelector('[id="1_1X2"] a').click();
+            document.getElementById('market_E_text').click();
+            document.querySelector('[id="1_OETG"] a').click();
         });
     }
 
     // 1 - Load session and main page
     await page.goto(process.env.SITE_BASE_URL, {waitUntil: "networkidle2"});
-    await goToDC();
+    await goToOE();
     console.log("Session URL loaded!");
 
     // Delay 5 seconds
-    await sleep(3000);
+    await sleep(5000);
 
     // 3 — Initial observer injection
     await initObserver();
@@ -307,8 +318,7 @@ async function run() {
     console.log("Live tracking initialized — ready!");
 
     // Keep script running
-    await new Promise(() => {
-    });
+    await new Promise(() => {});
 }
 
 run().catch((err) => console.error("Error:", err));

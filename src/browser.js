@@ -31,7 +31,8 @@ export async function testConnect() {
 
 
 export async function injectCookies(browser) {
-    const cookiesString = await fs.readFile('./cookies.json');
+    const cookiesPath = path.resolve(__dirname, '../cookies.json');
+    const cookiesString = await fs.readFile(cookiesPath, 'utf8');
     const cookies = JSON.parse(cookiesString);
 
     await browser.setCookie(...cookies);
