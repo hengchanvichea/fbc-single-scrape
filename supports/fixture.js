@@ -166,7 +166,7 @@ export function isNotVirtual(leagueName) {
 }
 
 export function hasMarker(team) {
-    return team.includes("(V)") || team.includes('+') || team.includes('(R)');
+    return team.includes("(V)") || team.includes('+');
 }
 
 export function hasLeague(name) {

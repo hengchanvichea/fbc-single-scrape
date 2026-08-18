@@ -1,2 +1,2 @@
-export const providerId = 1002;
-export const providerName = "855BET";
+export const providerId = 1003;
+export const providerName = "FBC";
