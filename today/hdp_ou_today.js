@@ -440,23 +440,10 @@ async function run() {
 
     // Function to detect iframe and inject observer
     async function initObserver() {
-        let targetFrame = null;
-        const frames = page.frames();
         await sleep(5000);
-        for (const mainFrame of frames) {
-            // Delay 3 seconds
-            const childFrames = mainFrame.childFrames();
-            for (const f of childFrames) {
-                try {
-                    if (f.url().includes("Handicap/Today.aspx")) {
-                        targetFrame = f;
-                        break;
-                    }
-                } catch {
-                }
-            }
-
-        }
+        const targetFrame = page
+            .frames()
+            .find(frame => frame.url().includes("Handicap/Today.aspx"));
 
         if (!targetFrame) return false;
         await injectObserver(targetFrame);
